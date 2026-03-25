@@ -42,6 +42,10 @@ const GLOBAL_STYLE = `
     --note-blue-border: #93c5fd;
     --note-green-border: #86efac;
     --note-pink-border: #f9a8d4;
+    --note-orange: #fcf2e7;
+    --note-orange-border: #f9c8a8;
+    --note-purple: #f6e7fc;
+    --note-purple-border: #c7a8f9;
   }
 
   .app-bg {
@@ -176,6 +180,8 @@ const GLOBAL_STYLE = `
   .note-card.blue   { background:var(--note-blue);   border-color:var(--note-blue-border); }
   .note-card.green  { background:var(--note-green);  border-color:var(--note-green-border); }
   .note-card.pink   { background:var(--note-pink);   border-color:var(--note-pink-border); }
+  .note-card.orange { background:var(--note-orange); border-color: var(--note-orange-border); }
+  .note-card.purple { background:var(--note-purple); border-color: var(--note-purple-border); }
 
   .note-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
   .note-title { font-family:'Nunito',sans-serif; font-weight:800; font-size:16px; color:var(--text-main); }
@@ -215,7 +221,11 @@ const GLOBAL_STYLE = `
   .cal-day:hover { background:#f0f2f8; }
   .cal-day.today { background:var(--blue-accent); color:#fff; font-weight:700; }
   .cal-day.has-reminder { position:relative; }
-  .cal-day.has-reminder::after { content:''; position:absolute; bottom:2px; left:50%; transform:translateX(-50%); width:4px; height:4px; border-radius:50%; background:var(--blue-accent); }
+  .cal-day.has-reminder::after { 
+  content:''; position:absolute; bottom:2px; left:50%; 
+  transform:translateX(-50%); width:4px; height:4px; 
+  border-radius:50%; background: var(--dot-color, var(--blue-accent)); 
+}
   .cal-day.today.has-reminder::after { background:#fff; }
   .cal-day.empty { pointer-events:none; }
 
@@ -427,6 +437,8 @@ const COLOR_OPTIONS = [
   { key: "blue",   bg: "#dbeafe", border: "#93c5fd" },
   { key: "green",  bg: "#dcfce7", border: "#86efac" },
   { key: "pink",   bg: "#fce7f3", border: "#f9a8d4" },
+  { key: "orange", bg: "#fcf2e7", border: "#f9c8a8" },
+  { key: "purple", bg: "#f6e7fc", border: "#c7a8f9" },
 ];
 
 const TYPE_OPTIONS = [
@@ -655,16 +667,17 @@ function Calendar({ notes }) {
   const today = new Date();
   const [cur, setCur] = useState({ year: today.getFullYear(), month: today.getMonth() });
 
-  const reminderDays = new Set(
-    notes
-      .filter(n => n.reminder)
-      .map(n => {
-        const d = new Date(n.reminder);
-        if (d.getFullYear() === cur.year && d.getMonth() === cur.month) return d.getDate();
-        return null;
-      })
-      .filter(Boolean)
-  );
+const reminderDays = new Map(
+  notes
+    .filter(n => n.reminder)
+    .map(n => {
+      const d = new Date(n.reminder);
+      if (d.getFullYear() === cur.year && d.getMonth() === cur.month)
+        return [d.getDate(), n.color];
+      return null;
+    })
+    .filter(Boolean)
+);
 
   const upcomingReminders = notes
     .filter(n => n.reminder && new Date(n.reminder) >= today)
@@ -687,6 +700,10 @@ function Calendar({ notes }) {
   const daysInMonth = getDaysInMonth(cur.year, cur.month);
   const firstDay = getFirstDay(cur.year, cur.month);
   const cells = [...Array(firstDay).fill(null), ...Array.from({length: daysInMonth}, (_,i) => i+1)];
+  const COLOR_MAP = {
+  yellow: "#fde047", blue: "#93c5fd", green: "#86efac",
+  pink: "#f9a8d4", orange: "#f9c8a8", purple: "#c7a8f9",
+};
 
   return (
     <div className="calendar-card">
@@ -705,11 +722,13 @@ function Calendar({ notes }) {
         {cells.map((day, i) => {
           if (!day) return <div key={i} className="cal-day empty" />;
           const isToday = day === today.getDate() && cur.month === today.getMonth() && cur.year === today.getFullYear();
-          const hasReminder = reminderDays.has(day);
+          const dotColor = reminderDays.get(day);
           return (
-            <div key={i} className={`cal-day ${isToday ? "today" : ""} ${hasReminder ? "has-reminder" : ""}`}>
-              {day}
-            </div>
+          <div key={i} className={`cal-day ${isToday ? "today" : ""} ${dotColor ? "has-reminder" : ""}`}
+            style={dotColor ? {"--dot-color": COLOR_MAP[dotColor] ?? "var(--blue-accent)"} : {}}
+          >
+            {day}
+          </div>
           );
         })}
       </div>
@@ -735,6 +754,8 @@ function Calendar({ notes }) {
         ))}
       </div>
     </div>
+
+    
   );
 }
 
@@ -866,8 +887,10 @@ function Dashboard({ user, onLogout }) {
   const [notes, setNotes] = useState(INITIAL_NOTES);
   const [showCreate, setShowCreate] = useState(false);
   const [editingNote, setEditingNote] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
-  function handleDelete(id) { setNotes(n => n.filter(x => x.id !== id)); }
+function handleDelete(id) { setDeletingId(id); }
+function confirmDelete() { setNotes(n => n.filter(x => x.id !== deletingId)); setDeletingId(null); }
   function handleToggle(id, idx) {
     setNotes(n => n.map(note => {
       if (note.id !== id || note.type !== "checklist") return note;
@@ -945,8 +968,36 @@ function Dashboard({ user, onLogout }) {
           onSave={handleSaveEdit}
         />
       )}
+
+      {deletingId && (
+        <div className="modal-overlay" onClick={() => setDeletingId(null)}>
+          <div className="modal-card" style={{maxWidth:360, textAlign:"center"}} onClick={e => e.stopPropagation()}>
+            <div style={{fontSize:40, marginBottom:12}}>{"🗑️"}</div>
+            <div className="modal-title">Excluir Rabisco</div>
+            <div className="modal-sub" style={{marginBottom:28}}>
+              Tem certeza que deseja excluir este rabisco? Esta ação não pode ser desfeita.
+            </div>
+            <div style={{display:"flex", gap:12}}>
+              <button
+                onClick={() => setDeletingId(null)}
+                style={{flex:1, padding:"12px", borderRadius:10, border:"1.5px solid var(--border)", background:"#fff", fontSize:15, fontWeight:700, cursor:"pointer", fontFamily:"'Nunito',sans-serif", color:"var(--text-main)"}}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmDelete}
+                style={{flex:1, padding:"12px", borderRadius:10, border:"none", background:"#ef4444", color:"#fff", fontSize:15, fontWeight:700, cursor:"pointer", fontFamily:"'Nunito',sans-serif"}}
+              >
+                Excluir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+
   );
+
 }
 
 // ── App root ──────────────────────────────────────────────────────────────────
