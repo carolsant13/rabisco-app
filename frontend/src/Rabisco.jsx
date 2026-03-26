@@ -7,6 +7,21 @@ const GLOBAL_STYLE = `
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+  .toast {
+  position: fixed; bottom: 28px; right: 28px;
+  background: #1a1a2e; color: #fff;
+  padding: 14px 22px; border-radius: 12px;
+  font-size: 14px; font-weight: 700;
+  font-family: 'Nunito', sans-serif;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  z-index: 200; display: flex; align-items: center; gap: 10px;
+  animation: slideUp .3s ease;
+}
+@keyframes slideUp {
+  from { opacity:0; transform: translateY(16px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+
   html, body, #root {
     width: 100%;
     min-height: 100vh;
@@ -575,6 +590,7 @@ function Logo() {
 function LoginPage({ onLogin, onGoRegister }) {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [showSenha, setShowSenha] = useState(false);
 
   function handleSubmit() {
     if (email && senha) onLogin({ email });
@@ -594,7 +610,22 @@ function LoginPage({ onLogin, onGoRegister }) {
           </div>
           <div className="field">
             <label>Senha</label>
-            <input placeholder="••••••••" type="password" value={senha} onChange={e=>setSenha(e.target.value)} />
+            <div style={{position:"relative"}}>
+              <input
+                placeholder="••••••••"
+                type={showSenha ? "text" : "password"}
+                value={senha}
+                onChange={e=>setSenha(e.target.value)}
+                style={{paddingRight:"42px", width:"100%"}}
+              />
+              <button
+                onClick={() => setShowSenha(v=>!v)}
+                style={{position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", fontSize:18, color:"var(--text-sub)", padding:0, lineHeight:1}}
+                title={showSenha ? "Ver senha" : "Ocultar senha"}
+              >
+                {showSenha ? "🐵" : "🙈"}
+              </button>
+            </div>
           </div>
           <span className="auth-link" onClick={onGoRegister}>Criar conta</span>
           <button className="btn-primary" onClick={handleSubmit}>Entrar</button>
@@ -606,11 +637,28 @@ function LoginPage({ onLogin, onGoRegister }) {
 
 function RegisterPage({ onRegister, onGoLogin }) {
   const [form, setForm] = useState({ nome:"", sobrenome:"", email:"", senha:"", confirmar:"" });
+  const [success, setSuccess] = useState(false);
+  const [showSenha, setShowSenha] = useState(false);
+  const [showConfirmar, setShowConfirmar] = useState(false);
   const set = (k) => (e) => setForm(f=>({...f,[k]:e.target.value}));
 
   function handleSubmit() {
-    if (form.nome && form.email && form.senha) onRegister({ email: form.email });
+    if (form.nome && form.email && form.senha) setSuccess(true);
   }
+
+  if (success) return (
+    <div className="app-bg">
+      <style>{GLOBAL_STYLE}</style>
+      <div className="auth-card" style={{textAlign:"center", gap:16}}>
+        <div style={{fontSize:56}}>{"✅"}</div>
+        <h2 className="auth-title">Conta criada!</h2>
+        <p className="auth-sub" style={{marginBottom:0}}>
+          Sua conta foi criada com sucesso. Faça login para acessar seus rabiscos.
+        </p>
+        <button className="btn-primary" onClick={onGoLogin}>Ir para o login</button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="app-bg">
@@ -623,8 +671,42 @@ function RegisterPage({ onRegister, onGoLogin }) {
           <div className="field"><label>Nome</label><input placeholder="Seu nome" value={form.nome} onChange={set("nome")} /></div>
           <div className="field"><label>Sobrenome</label><input placeholder="Seu sobrenome" value={form.sobrenome} onChange={set("sobrenome")} /></div>
           <div className="field"><label>Email</label><input placeholder="seu@email.com" type="email" value={form.email} onChange={set("email")} /></div>
-          <div className="field"><label>Senha</label><input placeholder="••••••••" type="password" value={form.senha} onChange={set("senha")} /></div>
-          <div className="field"><label>Confirmar Senha</label><input placeholder="••••••••" type="password" value={form.confirmar} onChange={set("confirmar")} /></div>
+          <div className="field">
+            <label>Senha</label>
+            <div style={{position:"relative"}}>
+              <input
+                placeholder="••••••••"
+                type={showSenha ? "text" : "password"}
+                value={form.senha}
+                onChange={set("senha")}
+                style={{paddingRight:"42px", width:"100%"}}
+              />
+              <button
+                onClick={() => setShowSenha(v=>!v)}
+                style={{position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", fontSize:18, color:"var(--text-sub)", padding:0, lineHeight:1}}
+              >
+                {showSenha ? "🐵" : "🙈"}
+              </button>
+            </div>
+          </div>
+          <div className="field">
+            <label>Confirmar Senha</label>
+            <div style={{position:"relative"}}>
+              <input
+                placeholder="••••••••"
+                type={showConfirmar ? "text" : "password"}
+                value={form.confirmar}
+                onChange={set("confirmar")}
+                style={{paddingRight:"42px", width:"100%"}}
+              />
+              <button
+                onClick={() => setShowConfirmar(v=>!v)}
+                style={{position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", fontSize:18, color:"var(--text-sub)", padding:0, lineHeight:1}}
+              >
+                {showConfirmar ? "🐵" : "🙈"}
+              </button>
+            </div>
+          </div>
           <span className="auth-link" onClick={onGoLogin}>Já tem uma conta? Entrar</span>
           <button className="btn-primary" onClick={handleSubmit}>Criar Conta</button>
         </div>
@@ -667,17 +749,22 @@ function Calendar({ notes }) {
   const today = new Date();
   const [cur, setCur] = useState({ year: today.getFullYear(), month: today.getMonth() });
 
-const reminderDays = new Map(
-  notes
-    .filter(n => n.reminder)
-    .map(n => {
-      const d = new Date(n.reminder);
-      if (d.getFullYear() === cur.year && d.getMonth() === cur.month)
-        return [d.getDate(), n.color];
-      return null;
-    })
-    .filter(Boolean)
-);
+  const COLOR_MAP = {
+    yellow: "#fde047", blue: "#93c5fd", green: "#86efac",
+    pink: "#f9a8d4", orange: "#f9c8a8", purple: "#c7a8f9",
+  };
+
+  const reminderDays = new Map(
+    notes
+      .filter(n => n.reminder)
+      .map(n => {
+        const d = new Date(n.reminder);
+        if (d.getFullYear() === cur.year && d.getMonth() === cur.month)
+          return [d.getDate(), n.color];
+        return null;
+      })
+      .filter(Boolean)
+  );
 
   const upcomingReminders = notes
     .filter(n => n.reminder && new Date(n.reminder) >= today)
@@ -685,25 +772,15 @@ const reminderDays = new Map(
     .slice(0, 3);
 
   function prev() {
-    setCur(c => {
-      if (c.month === 0) return { year: c.year - 1, month: 11 };
-      return { ...c, month: c.month - 1 };
-    });
+    setCur(c => c.month === 0 ? { year: c.year - 1, month: 11 } : { ...c, month: c.month - 1 });
   }
   function next() {
-    setCur(c => {
-      if (c.month === 11) return { year: c.year + 1, month: 0 };
-      return { ...c, month: c.month + 1 };
-    });
+    setCur(c => c.month === 11 ? { year: c.year + 1, month: 0 } : { ...c, month: c.month + 1 });
   }
 
   const daysInMonth = getDaysInMonth(cur.year, cur.month);
   const firstDay = getFirstDay(cur.year, cur.month);
   const cells = [...Array(firstDay).fill(null), ...Array.from({length: daysInMonth}, (_,i) => i+1)];
-  const COLOR_MAP = {
-  yellow: "#fde047", blue: "#93c5fd", green: "#86efac",
-  pink: "#f9a8d4", orange: "#f9c8a8", purple: "#c7a8f9",
-};
 
   return (
     <div className="calendar-card">
@@ -724,11 +801,11 @@ const reminderDays = new Map(
           const isToday = day === today.getDate() && cur.month === today.getMonth() && cur.year === today.getFullYear();
           const dotColor = reminderDays.get(day);
           return (
-          <div key={i} className={`cal-day ${isToday ? "today" : ""} ${dotColor ? "has-reminder" : ""}`}
-            style={dotColor ? {"--dot-color": COLOR_MAP[dotColor] ?? "var(--blue-accent)"} : {}}
-          >
-            {day}
-          </div>
+            <div key={i} className={`cal-day ${isToday ? "today" : ""} ${dotColor ? "has-reminder" : ""}`}
+              style={dotColor ? {"--dot-color": COLOR_MAP[dotColor] ?? "var(--blue-accent)"} : {}}
+            >
+              {day}
+            </div>
           );
         })}
       </div>
@@ -743,19 +820,20 @@ const reminderDays = new Map(
             <span>📅</span>
             <p>Nenhum lembrete agendado</p>
           </div>
-        ) : upcomingReminders.map(n => (
-          <div key={n.id} className="reminder-item">
-            <div className="reminder-item-icon">🔔</div>
-            <div className="reminder-item-info">
-              <p>{n.title}</p>
-              <span>{new Date(n.reminder).toLocaleString("pt-BR", {dateStyle:"short", timeStyle:"short"})}</span>
+        ) : upcomingReminders.map(n => {
+          const bg = COLOR_MAP[n.color] ?? "#93c5fd";
+          return (
+            <div key={n.id} className="reminder-item" style={{borderLeft:`4px solid ${bg}`, background: bg + "33"}}>
+              <div className="reminder-item-icon">🔔</div>
+              <div className="reminder-item-info">
+                <p>{n.title}</p>
+                <span>{new Date(n.reminder).toLocaleString("pt-BR", {dateStyle:"short", timeStyle:"short"})}</span>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
-
-    
   );
 }
 
@@ -888,9 +966,21 @@ function Dashboard({ user, onLogout }) {
   const [showCreate, setShowCreate] = useState(false);
   const [editingNote, setEditingNote] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+  const [search, setSearch] = useState("");
+  const [toast, setToast] = useState(null);
+
+  function showToast(msg) {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  }
 
 function handleDelete(id) { setDeletingId(id); }
-function confirmDelete() { setNotes(n => n.filter(x => x.id !== deletingId)); setDeletingId(null); }
+function confirmDelete() { 
+  setNotes(n => n.filter(x => x.id !== deletingId)); 
+  setDeletingId(null); 
+  showToast("Rabisco Excluido.")
+  }
+
   function handleToggle(id, idx) {
     setNotes(n => n.map(note => {
       if (note.id !== id || note.type !== "checklist") return note;
@@ -898,13 +988,19 @@ function confirmDelete() { setNotes(n => n.filter(x => x.id !== deletingId)); se
       return {...note, items};
     }));
   }
-  function handleCreate(note) { setNotes(n => [...n, note]); }
+  function handleCreate(note) { 
+    setNotes(n => [...n, note]); 
+    showToast("Rabisco criado  com sucesso!");
+  }
   function handleEdit(note) { setEditingNote(note); }
   function handleSaveEdit(updated) {
     setNotes(n => n.map(note => note.id === updated.id ? updated : note));
+    showToast("Rabisco atualizado!");
   }
 
-  const textNotes = notes.filter(n => n.type !== "calendar");
+  const textNotes = notes
+  .filter(n => n.type !== "calendar")
+  .filter(n => n.title.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="dash-wrap">
@@ -927,16 +1023,43 @@ function confirmDelete() { setNotes(n => n.filter(x => x.id !== deletingId)); se
             <h1>Meus Rabiscos</h1>
             <p>Organize suas ideias, listas e tarefas</p>
           </div>
-          <button className="btn-new" onClick={() => setShowCreate(true)}>+ Novo Rabisco</button>
+          <div style={{display:"flex", alignItems:"center", gap:12}}>
+            <div style={{position:"relative"}}>
+              <span style={{position:"absolute", left:12, top:"50%", transform:"translateY(-50%)", fontSize:15, color:"var(--text-sub)"}}>🔍</span>
+              <input
+                placeholder="Buscar rabiscos..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                style={{
+                  width:240, background:"#fff",
+                  border:"1.5px solid var(--border)",
+                  borderRadius:10, padding:"11px 36px 11px 36px",
+                  fontSize:14, color:"var(--text-main)", outline:"none",
+                  fontFamily:"'Lato',sans-serif",
+                  boxShadow:"0 2px 8px rgba(0,0,0,0.06)",
+                  transition:"border-color .2s"
+                }}
+                onFocus={e => e.target.style.borderColor = "var(--blue-accent)"}
+                onBlur={e => e.target.style.borderColor = "var(--border)"}
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  style={{position:"absolute", right:10, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", fontSize:16, color:"var(--text-sub)", padding:0}}
+                >×</button>
+              )}
+            </div>
+            <button className="btn-new" onClick={() => setShowCreate(true)}>+ Novo Rabisco</button>
+          </div>
         </div>
 
         <div className="dash-grid">
           <div className="notes-grid">
-            {textNotes.length === 0 ? (
-              <div className="notes-empty">
-                <span>📝</span>
-                <p>Nenhum rabisco ainda. Crie o primeiro!</p>
-              </div>
+           {textNotes.length === 0 ? (
+            <div className="notes-empty">
+              <span>{search ? "🔍" : "📝"}</span>
+              <p>{search ? `Nenhum rabisco encontrado para "${search}"` : "Nenhum rabisco ainda. Crie o primeiro!"}</p>
+            </div>
             ) : textNotes.map(note => (
               <NoteCard
                 key={note.id}
@@ -994,6 +1117,10 @@ function confirmDelete() { setNotes(n => n.filter(x => x.id !== deletingId)); se
           </div>
         </div>
       )}
+
+      {toast && (
+  <div className="toast">{toast}</div>
+)}
     </div>
 
   );
