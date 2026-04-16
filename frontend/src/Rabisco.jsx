@@ -162,7 +162,6 @@ const GLOBAL_STYLE = `
   }
   .btn-logout:hover { color:var(--text-main); }
 
-  .dash-content { flex:1; padding:36px 32px; max-width:1200px; margin:0 auto; width:100%; }
 
   .dash-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:32px; }
   .dash-header h1 { font-family:'Nunito',sans-serif; font-size:28px; font-weight:800; color:var(--text-main); }
@@ -180,7 +179,112 @@ const GLOBAL_STYLE = `
   .btn-new:hover { background:var(--blue-btn-hover); }
   .btn-new:active { transform:scale(.97); }
 
-  .dash-grid { display:grid; grid-template-columns:1fr 1fr 360px; gap:20px; align-items:start; }
+  /* ── Sidebar ── */
+  .dash-body { display: flex; flex: 1; min-height: 0; }
+
+  /* Botão hambúrguer (visível apenas abaixo de 1100px) */
+  .btn-sidebar-toggle {
+    display: none;
+    align-items: center; justify-content: center;
+    background: none; border: none; cursor: pointer;
+    font-size: 22px; width: 40px; height: 40px;
+    border-radius: 8px; color: var(--text-main);
+    transition: background .15s; flex-shrink: 0;
+    margin-right: 4px;
+  }
+  .btn-sidebar-toggle:hover { background: #f0f2f8; }
+
+  /* Backdrop que fecha o drawer no mobile */
+  .sidebar-backdrop {
+    display: none; position: fixed; inset: 0;
+    z-index: 49; background: rgba(0,0,0,.35);
+  }
+  .sidebar-backdrop.open { display: block; }
+
+  .sidebar {
+    width: 230px; flex-shrink: 0;
+    background: #fff; border-right: 1.5px solid var(--border);
+    display: flex; flex-direction: column;
+    padding: 20px 0; overflow-y: auto;
+  }
+  .sidebar-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .6px; color: var(--text-sub);
+    padding: 0 20px; margin-bottom: 6px;
+  }
+  .sidebar-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; margin: 0 8px; border-radius: 8px;
+    cursor: pointer; font-size: 14px; font-weight: 600;
+    font-family: 'Nunito', sans-serif; color: var(--text-main);
+    transition: background .15s; position: relative;
+    user-select: none;
+  }
+  .sidebar-item:hover { background: #f0f2f8; }
+  .sidebar-item.active { background: #e8eeff; color: var(--blue-accent); }
+  .sidebar-item-icon { font-size: 16px; flex-shrink: 0; }
+  .sidebar-item-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sidebar-item-count {
+    font-size: 11px; font-weight: 700; background: #e9ecf3;
+    color: var(--text-sub); border-radius: 10px; padding: 1px 7px;
+    flex-shrink: 0;
+  }
+  .sidebar-item.active .sidebar-item-count { background: var(--blue-accent); color: #fff; }
+  .sidebar-action-btn {
+    background: none; border: none; cursor: pointer;
+    font-size: 13px; opacity: 0; transition: opacity .15s;
+    padding: 2px 5px; border-radius: 4px; flex-shrink: 0;
+  }
+  .sidebar-item:hover .sidebar-action-btn { opacity: 1; }
+  .sidebar-action-btn.edit { color: var(--blue-accent); }
+  .sidebar-action-btn.edit:hover { background: #e8eeff; }
+  .sidebar-action-btn.delete { color: #ef4444; }
+  .sidebar-action-btn.delete:hover { background: #fee2e2; }
+
+  .sidebar-rename-input {
+    display: flex; align-items: center; gap: 4px;
+    padding: 4px 8px; margin: 0 8px; border-radius: 8px;
+    background: #f0f4ff; border: 1.5px solid var(--blue-accent);
+  }
+  .sidebar-rename-input input {
+    flex: 1; min-width: 0; background: none; border: none;
+    outline: none; font-size: 14px; font-weight: 600;
+    font-family: 'Nunito', sans-serif; color: var(--text-main);
+  }
+  .sidebar-rename-input button {
+    background: none; border: none; cursor: pointer;
+    font-size: 14px; padding: 1px 4px; border-radius: 4px; flex-shrink: 0;
+  }
+  .sidebar-rename-input button:hover { background: #dce7ff; }
+  .sidebar-divider { border: none; border-top: 1.5px solid var(--border); margin: 10px 16px; }
+  .btn-new-folder {
+    display: flex; align-items: center; gap: 8px;
+    background: none; border: none; cursor: pointer;
+    font-size: 14px; font-weight: 700; color: var(--blue-accent);
+    padding: 9px 20px; font-family: 'Nunito', sans-serif;
+    width: 100%; transition: background .15s; text-align: left;
+  }
+  .btn-new-folder:hover { background: #f0f4ff; }
+  .sidebar-create-input {
+    display: flex; align-items: center; gap: 6px;
+    margin: 4px 8px; padding: 2px 4px;
+  }
+  .sidebar-create-input input {
+    flex: 1; background: var(--input-bg); border: 1.5px solid var(--blue-accent);
+    border-radius: 8px; padding: 7px 10px; font-size: 13px;
+    color: var(--text-main); outline: none; font-family: 'Lato', sans-serif;
+    min-width: 0;
+  }
+  .sidebar-create-confirm {
+    background: var(--blue-btn); color: #fff; border: none;
+    border-radius: 6px; padding: 6px 10px; font-size: 13px; font-weight: 700;
+    cursor: pointer; flex-shrink: 0; font-family: 'Nunito', sans-serif;
+  }
+  .sidebar-create-confirm:hover { background: var(--blue-btn-hover); }
+
+  .dash-content { flex: 1; min-width: 0; padding: 36px 32px; overflow-y: auto; }
+
+  .dash-grid { display: grid; grid-template-columns: 1fr 360px; gap: 20px; align-items: start; }
 
   /* Note Cards */
   .note-card {
@@ -188,6 +292,7 @@ const GLOBAL_STYLE = `
     border:1.5px solid transparent;
     position:relative; transition: box-shadow .2s, transform .15s;
     animation: fadeUp .3s ease;
+    min-width: 0; overflow: hidden;
   }
   .note-card:hover { box-shadow:0 6px 24px rgba(0,0,0,.1); transform:translateY(-2px); }
 
@@ -199,7 +304,7 @@ const GLOBAL_STYLE = `
   .note-card.purple { background:var(--note-purple); border-color: var(--note-purple-border); }
 
   .note-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
-  .note-title { font-family:'Nunito',sans-serif; font-weight:800; font-size:16px; color:var(--text-main); }
+  .note-title { font-family:'Nunito',sans-serif; font-weight:800; font-size:16px; color:var(--text-main); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
   .note-actions { display:flex; gap:8px; }
   .note-actions button {
     background:none; border:none; cursor:pointer;
@@ -207,15 +312,18 @@ const GLOBAL_STYLE = `
   }
   .note-actions button:hover { opacity:1; }
   .note-type { font-size:12px; color:var(--text-sub); margin-bottom:14px; font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
-  .note-body { font-size:14px; color:var(--text-main); line-height:1.6; }
+  .note-body { font-size:14px; color:var(--text-main); line-height:1.6; overflow:hidden; }
+  .note-body p { word-break:break-word; overflow-wrap:anywhere; }
 
   /* Checklist */
   .checklist-item { display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:14px; color:var(--text-main); }
-  .checklist-item input[type=checkbox] { width:15px; height:15px; accent-color:var(--blue-accent); cursor:pointer; }
+  .checklist-item input[type=checkbox] { width:15px; height:15px; accent-color:var(--blue-accent); cursor:pointer; flex-shrink:0; }
+  .checklist-item span { word-break:break-word; overflow-wrap:anywhere; }
   .checklist-item.checked span { text-decoration:line-through; color:var(--text-sub); }
 
   /* List */
   .list-item { display:flex; align-items:flex-start; gap:8px; margin-bottom:6px; font-size:14px; color:var(--text-main); }
+  .list-item span { word-break:break-word; overflow-wrap:anywhere; }
   .list-bullet { width:5px; height:5px; border-radius:50%; background:var(--blue-accent); margin-top:6px; flex-shrink:0; }
 
   /* Calendar Widget */
@@ -379,49 +487,78 @@ const GLOBAL_STYLE = `
   .notes-empty span { font-size:48px; }
   .notes-empty p { font-size:15px; }
 
+  /* ── Nota bloqueada ── */
+  .note-card { position: relative; }
+  .note-card.locked .note-body { filter: blur(5px); user-select: none; pointer-events: none; }
+  .note-lock-overlay {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.55); border-radius: var(--radius);
+    cursor: pointer; gap: 6px;
+    transition: background .2s;
+  }
+  .note-lock-overlay:hover { background: rgba(255,255,255,0.72); }
+  .note-lock-icon { font-size: 36px; }
+  .note-lock-text { font-size: 13px; font-weight: 700; color: var(--text-sub); font-family: 'Nunito', sans-serif; }
+  .note-lock-badge {
+    font-size: 14px; margin-left: 4px; vertical-align: middle; opacity: .75;
+  }
+
   .notes-grid {
-    grid-column: 1 / 3;
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
+    min-width: 0;
   }
 
   /* ── Responsivo ── */
-  @media (max-width: 900px) {
-    .dash-grid {
-      grid-template-columns: 1fr;
+
+  /* Tablet/Mobile: sidebar vira drawer deslizante */
+  @media (max-width: 1099px) {
+    .btn-sidebar-toggle { display: flex; }
+
+    .sidebar {
+      position: fixed;
+      left: 0; top: 80px;
+      height: calc(100vh - 80px);
+      z-index: 50;
+      transform: translateX(-100%);
+      transition: transform .25s ease;
+      box-shadow: 4px 0 28px rgba(0,0,0,.15);
     }
-    .notes-grid {
-      grid-column: 1 / 2;
-    }
-    .notes-empty { grid-column: 1 / 3; }
+    .sidebar.open { transform: translateX(0); }
   }
 
+  /* Tablet: grid de uma coluna, calendário embaixo */
+  @media (max-width: 900px) {
+    .dash-content { padding: 28px 20px; }
+    .dash-grid { grid-template-columns: 1fr; }
+    .notes-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* Mobile */
   @media (max-width: 640px) {
-    .app-bg { padding: 16px; }
-
-    .auth-card { padding: 32px 20px 28px; }
-
-    .topbar { padding: 0 16px; height: 80px; }
-    .topbar-brand span { font-size: 15px; }
+    .topbar { padding: 0 16px; height: 68px; }
     .topbar-title { display: none; }
 
     .dash-content { padding: 20px 16px; }
 
-    .dash-header { flex-direction: column; gap: 14px; align-items: stretch; }
+    .dash-header { flex-direction: column; gap: 12px; align-items: stretch; }
+    .dash-header > div:last-child { flex-direction: column; gap: 10px; }
     .dash-header h1 { font-size: 22px; }
-    .btn-new { justify-content: center; }
+    .btn-new { justify-content: center; width: 100%; }
 
-    .notes-grid {
-      grid-template-columns: 1fr;
-    }
-    .notes-empty { grid-column: 1 / 2; }
+    .notes-grid { grid-template-columns: 1fr; }
 
     .modal-card { padding: 24px 18px 20px; margin: 12px; max-width: calc(100vw - 24px); }
 
     .cal-day { font-size: 12px; }
-
     .rcal-day { font-size: 11px; }
+
+    .app-bg { padding: 16px; }
+    .auth-card { padding: 32px 20px 28px; }
+
+    .sidebar { top: 68px; height: calc(100vh - 68px); }
   }
 `;
 
@@ -715,13 +852,17 @@ function RegisterPage({ onRegister, onGoLogin }) {
   );
 }
 
-function NoteCard({ note, onDelete, onToggleCheck, onEdit }) {
+function NoteCard({ note, onDelete, onToggleCheck, onEdit, isUnlocked, onRequestUnlock }) {
+  const isLocked = note.password && !isUnlocked;
   return (
-    <div className={`note-card ${note.color}`}>
+    <div className={`note-card ${note.color} ${isLocked ? "locked" : ""}`}>
       <div className="note-header">
-        <span className="note-title">{note.title}</span>
+        <span className="note-title">
+          {note.title}
+          {note.password && <span className="note-lock-badge">{isUnlocked ? "🔓" : "🔒"}</span>}
+        </span>
         <div className="note-actions">
-          <button title="Editar" onClick={() => onEdit(note)}>✏️</button>
+          <button title="Editar" onClick={() => isLocked ? onRequestUnlock(note, "edit") : onEdit(note)}>✏️</button>
           <button title="Excluir" onClick={() => onDelete(note.id)}>🗑️</button>
         </div>
       </div>
@@ -741,6 +882,12 @@ function NoteCard({ note, onDelete, onToggleCheck, onEdit }) {
           </div>
         ))}
       </div>
+      {isLocked && (
+        <div className="note-lock-overlay" onClick={() => onRequestUnlock(note, "view")}>
+          <span className="note-lock-icon">🔒</span>
+          <span className="note-lock-text">Clique para desbloquear</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -838,7 +985,7 @@ function Calendar({ notes }) {
 }
 
 // ── Modal compartilhado (criar / editar) ──────────────────────────────────────
-function NoteModal({ mode, initialNote, onClose, onSave }) {
+function NoteModal({ mode, initialNote, onClose, onSave, folders, initialFolderId }) {
   const isEdit = mode === "edit";
 
   // Estado inicial baseado na nota (editar) ou vazio (criar)
@@ -848,6 +995,11 @@ function NoteModal({ mode, initialNote, onClose, onSave }) {
   const [content, setContent] = useState(initialNote?.content ?? "");
   const [hasReminder, setHasReminder] = useState(!!initialNote?.reminder);
   const [reminderDate, setReminderDate] = useState(initialNote?.reminder ?? null);
+  const [hasPassword, setHasPassword] = useState(!!initialNote?.password);
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [folderId, setFolderId] = useState(initialNote?.folderId ?? initialFolderId ?? "");
 
   // Itens para checklist/list – normalizado como array de strings
   const toStrings = (note) => {
@@ -866,12 +1018,19 @@ function NoteModal({ mode, initialNote, onClose, onSave }) {
 
   function handleSave() {
     if (!title.trim()) return;
+    if (hasPassword && password && password !== confirmPassword) return;
+    // Resolve a senha final: nova senha, senha existente mantida, ou sem senha
+    const resolvedPassword = hasPassword
+      ? (password.trim() ? password : (initialNote?.password ?? null))
+      : null;
     const base = {
       id: initialNote?.id ?? Date.now(),
       title,
       type,
       color,
       reminder: hasReminder && reminderDate ? reminderDate : null,
+      password: resolvedPassword,
+      folderId: folderId || null,
     };
     if (type === "text") {
       onSave({ ...base, content });
@@ -911,6 +1070,16 @@ function NoteModal({ mode, initialNote, onClose, onSave }) {
             {TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
         </div>
+
+        {folders && folders.length > 0 && (
+          <div className="modal-field">
+            <label>Pasta</label>
+            <select value={folderId} onChange={e => setFolderId(e.target.value)}>
+              <option value="">Sem pasta</option>
+              {folders.map(f => <option key={f.id} value={f.id}>{f.icon} {f.name}</option>)}
+            </select>
+          </div>
+        )}
 
         <div className="modal-field">
           <label>Cor do Rabisco</label>
@@ -953,9 +1122,107 @@ function NoteModal({ mode, initialNote, onClose, onSave }) {
           )}
         </div>
 
+        <div className="modal-field">
+          <label>Senha</label>
+          <div className="toggle-row">
+            <button
+              className={`toggle ${hasPassword ? "on" : ""}`}
+              onClick={() => { setHasPassword(v=>!v); setPassword(""); setConfirmPassword(""); }}
+            />
+            <span className="toggle-label">Proteger com senha</span>
+          </div>
+          {hasPassword && (
+            <div style={{marginTop:10, display:"flex", flexDirection:"column", gap:8}}>
+              {isEdit && initialNote?.password && (
+                <div style={{fontSize:13, color:"var(--text-sub)", fontStyle:"italic"}}>
+                  🔒 Senha atual ativa. Deixe em branco para mantê-la.
+                </div>
+              )}
+              <div style={{position:"relative"}}>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder={isEdit && initialNote?.password ? "Nova senha (opcional)..." : "Digite a senha..."}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  style={{width:"100%", paddingRight:40}}
+                />
+                <button
+                  onClick={() => setShowPassword(v=>!v)}
+                  style={{position:"absolute", right:10, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", fontSize:16, padding:0}}
+                  type="button"
+                >
+                  {showPassword ? "🐵" : "🙈"}
+                </button>
+              </div>
+              {password && (
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Confirme a senha..."
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  style={{width:"100%"}}
+                />
+              )}
+              {password && confirmPassword && password !== confirmPassword && (
+                <div style={{color:"#ef4444", fontSize:13, fontWeight:700}}>As senhas não coincidem.</div>
+              )}
+            </div>
+          )}
+        </div>
+
         <button className="btn-primary" onClick={handleSave}>
           {isEdit ? "Salvar Alterações" : "Criar Rabisco"}
         </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Modal de desbloqueio por senha ───────────────────────────────────────────
+function PasswordModal({ note, onClose, onUnlock }) {
+  const [senha, setSenha] = useState("");
+  const [erro, setErro] = useState(false);
+  const [show, setShow] = useState(false);
+
+  function handleSubmit() {
+    if (senha === note.password) {
+      onUnlock(note.id);
+      onClose();
+    } else {
+      setErro(true);
+    }
+  }
+
+  return (
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal-card" style={{maxWidth:380}}>
+        <button className="modal-close" onClick={onClose}>×</button>
+        <div style={{textAlign:"center", fontSize:44, marginBottom:6}}>🔒</div>
+        <div className="modal-title">Rabisco Protegido</div>
+        <div className="modal-sub">Digite a senha para acessar "{note.title}".</div>
+        <div className="modal-field" style={{marginTop:18}}>
+          <label>Senha</label>
+          <div style={{position:"relative"}}>
+            <input
+              type={show ? "text" : "password"}
+              placeholder="Digite a senha..."
+              value={senha}
+              onChange={e => { setSenha(e.target.value); setErro(false); }}
+              onKeyDown={e => e.key === "Enter" && handleSubmit()}
+              style={{width:"100%", paddingRight:40, ...(erro ? {borderColor:"#ef4444"} : {})}}
+              autoFocus
+            />
+            <button
+              onClick={() => setShow(v=>!v)}
+              style={{position:"absolute", right:10, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", fontSize:16, padding:0}}
+              type="button"
+            >
+              {show ? "🐵" : "🙈"}
+            </button>
+          </div>
+          {erro && <div style={{color:"#ef4444", fontSize:13, marginTop:4, fontWeight:700}}>Senha incorreta. Tente novamente.</div>}
+        </div>
+        <button className="btn-primary" onClick={handleSubmit}>Desbloquear</button>
       </div>
     </div>
   );
@@ -968,6 +1235,15 @@ function Dashboard({ user, onLogout }) {
   const [deletingId, setDeletingId] = useState(null);
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState(null);
+  const [unlockedNotes, setUnlockedNotes] = useState(new Set());
+  const [lockPrompt, setLockPrompt] = useState(null); // { note, action: 'edit' | 'view' }
+  const [folders, setFolders] = useState([]);
+  const [activeFolderId, setActiveFolderId] = useState(null); // null = Todos
+  const [creatingFolder, setCreatingFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [editingFolderId, setEditingFolderId] = useState(null);
+  const [editingFolderName, setEditingFolderName] = useState("");
 
   function showToast(msg) {
     setToast(msg);
@@ -988,19 +1264,60 @@ function confirmDelete() {
       return {...note, items};
     }));
   }
-  function handleCreate(note) { 
-    setNotes(n => [...n, note]); 
+  function handleCreateFolder() {
+    if (!newFolderName.trim()) { setCreatingFolder(false); return; }
+    const folder = { id: Date.now(), name: newFolderName.trim(), icon: "📁" };
+    setFolders(f => [...f, folder]);
+    setNewFolderName("");
+    setCreatingFolder(false);
+    showToast("Pasta criada!");
+  }
+  function handleDeleteFolder(id) {
+    setFolders(f => f.filter(x => x.id !== id));
+    setNotes(n => n.map(note => note.folderId === id ? { ...note, folderId: null } : note));
+    if (activeFolderId === id) setActiveFolderId(null);
+    showToast("Pasta excluída.");
+  }
+  function handleStartRenameFolder(folder) {
+    setEditingFolderId(folder.id);
+    setEditingFolderName(folder.name);
+  }
+  function handleSaveRenameFolder(id) {
+    if (editingFolderName.trim()) {
+      setFolders(f => f.map(x => x.id === id ? { ...x, name: editingFolderName.trim() } : x));
+    }
+    setEditingFolderId(null);
+    setEditingFolderName("");
+  }
+
+  function handleCreate(note) {
+    setNotes(n => [...n, note]);
     showToast("Rabisco criado  com sucesso!");
   }
   function handleEdit(note) { setEditingNote(note); }
+  function handleRequestUnlock(note, action) {
+    setLockPrompt({ note, action });
+  }
+  function handleUnlock(noteId) {
+    setUnlockedNotes(prev => new Set([...prev, noteId]));
+  }
+  function handleUnlockAndProceed(noteId) {
+    handleUnlock(noteId);
+    if (lockPrompt?.action === "edit") {
+      const note = notes.find(n => n.id === noteId);
+      setEditingNote(note);
+    }
+    setLockPrompt(null);
+  }
   function handleSaveEdit(updated) {
     setNotes(n => n.map(note => note.id === updated.id ? updated : note));
     showToast("Rabisco atualizado!");
   }
 
   const textNotes = notes
-  .filter(n => n.type !== "calendar")
-  .filter(n => n.title.toLowerCase().includes(search.toLowerCase()));
+    .filter(n => n.type !== "calendar")
+    .filter(n => activeFolderId === null || n.folderId === activeFolderId)
+    .filter(n => n.title.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="dash-wrap">
@@ -1008,7 +1325,8 @@ function confirmDelete() {
 
       <div className="topbar">
         <div className="topbar-brand">
-      <img src={logoImg} alt="Rabisco" style={{width: 70, height: 70, objectFit: "contain"}} />
+          <button className="btn-sidebar-toggle" onClick={() => setSidebarOpen(v => !v)} title="Menu">☰</button>
+          <img src={logoImg} alt="Rabisco" style={{width: 70, height: 70, objectFit: "contain"}} />
           <span style={{color:"var(--border)",margin:"0 8px"}}>|</span>
           <span className="topbar-title">Meus Rabiscos</span>
         </div>
@@ -1017,10 +1335,99 @@ function confirmDelete() {
         </button>
       </div>
 
-      <div className="dash-content">
+      <div className="dash-body">
+        {/* Backdrop fecha o drawer ao clicar fora */}
+        <div className={`sidebar-backdrop ${sidebarOpen ? "open" : ""}`} onClick={() => setSidebarOpen(false)} />
+
+        {/* ── Sidebar de Pastas ── */}
+        <aside className={`sidebar ${sidebarOpen ? "open" : ""}`}>
+          <div className="sidebar-label">Rabiscos</div>
+          <div
+            className={`sidebar-item ${activeFolderId === null ? "active" : ""}`}
+            onClick={() => { setActiveFolderId(null); setSidebarOpen(false); }}
+          >
+            <span className="sidebar-item-icon">📝</span>
+            <span className="sidebar-item-name">Todos</span>
+            <span className="sidebar-item-count">{notes.filter(n => n.type !== "calendar").length}</span>
+          </div>
+
+          {folders.length > 0 && (
+            <>
+              <hr className="sidebar-divider" />
+              <div className="sidebar-label">Pastas</div>
+              {folders.map(folder => {
+                const count = notes.filter(n => n.folderId === folder.id).length;
+                const isEditing = editingFolderId === folder.id;
+                if (isEditing) {
+                  return (
+                    <div key={folder.id} className="sidebar-rename-input">
+                      <span>{folder.icon}</span>
+                      <input
+                        autoFocus
+                        value={editingFolderName}
+                        onChange={e => setEditingFolderName(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === "Enter") handleSaveRenameFolder(folder.id);
+                          if (e.key === "Escape") { setEditingFolderId(null); setEditingFolderName(""); }
+                        }}
+                        onBlur={() => handleSaveRenameFolder(folder.id)}
+                      />
+                      <button onClick={() => handleSaveRenameFolder(folder.id)} title="Salvar">✓</button>
+                    </div>
+                  );
+                }
+                return (
+                  <div
+                    key={folder.id}
+                    className={`sidebar-item ${activeFolderId === folder.id ? "active" : ""}`}
+                    onClick={() => { setActiveFolderId(folder.id); setSidebarOpen(false); }}
+                  >
+                    <span className="sidebar-item-icon">{folder.icon}</span>
+                    <span className="sidebar-item-name">{folder.name}</span>
+                    <span className="sidebar-item-count">{count}</span>
+                    <button
+                      className="sidebar-action-btn edit"
+                      title="Renomear pasta"
+                      onClick={e => { e.stopPropagation(); handleStartRenameFolder(folder); }}
+                    >✏️</button>
+                    <button
+                      className="sidebar-action-btn delete"
+                      title="Excluir pasta"
+                      onClick={e => { e.stopPropagation(); handleDeleteFolder(folder.id); }}
+                    >🗑</button>
+                  </div>
+                );
+              })}
+            </>
+          )}
+
+          <hr className="sidebar-divider" />
+
+          {creatingFolder ? (
+            <div className="sidebar-create-input">
+              <input
+                autoFocus
+                placeholder="Nome da pasta..."
+                value={newFolderName}
+                onChange={e => setNewFolderName(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === "Enter") handleCreateFolder();
+                  if (e.key === "Escape") { setCreatingFolder(false); setNewFolderName(""); }
+                }}
+              />
+              <button className="sidebar-create-confirm" onClick={handleCreateFolder}>✓</button>
+            </div>
+          ) : (
+            <button className="btn-new-folder" onClick={() => setCreatingFolder(true)}>
+              + Nova Pasta
+            </button>
+          )}
+        </aside>
+
+        <div className="dash-content">
         <div className="dash-header">
           <div>
-            <h1>Meus Rabiscos</h1>
+            <h1>{activeFolderId ? folders.find(f => f.id === activeFolderId)?.name ?? "Meus Rabiscos" : "Meus Rabiscos"}</h1>
             <p>Organize suas ideias, listas e tarefas</p>
           </div>
           <div style={{display:"flex", alignItems:"center", gap:12}}>
@@ -1031,7 +1438,7 @@ function confirmDelete() {
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 style={{
-                  width:240, background:"#fff",
+                  width:"min(240px, 100%)", background:"#fff",
                   border:"1.5px solid var(--border)",
                   borderRadius:10, padding:"11px 36px 11px 36px",
                   fontSize:14, color:"var(--text-main)", outline:"none",
@@ -1067,12 +1474,15 @@ function confirmDelete() {
                 onDelete={handleDelete}
                 onToggleCheck={handleToggle}
                 onEdit={handleEdit}
+                isUnlocked={unlockedNotes.has(note.id)}
+                onRequestUnlock={handleRequestUnlock}
               />
             ))}
           </div>
           <Calendar notes={notes} />
         </div>
-      </div>
+        </div>{/* fim dash-content */}
+      </div>{/* fim dash-body */}
 
       {showCreate && (
         <NoteModal
@@ -1080,6 +1490,8 @@ function confirmDelete() {
           initialNote={null}
           onClose={() => setShowCreate(false)}
           onSave={handleCreate}
+          folders={folders}
+          initialFolderId={activeFolderId}
         />
       )}
 
@@ -1089,6 +1501,7 @@ function confirmDelete() {
           initialNote={editingNote}
           onClose={() => setEditingNote(null)}
           onSave={handleSaveEdit}
+          folders={folders}
         />
       )}
 
@@ -1116,6 +1529,14 @@ function confirmDelete() {
             </div>
           </div>
         </div>
+      )}
+
+      {lockPrompt && (
+        <PasswordModal
+          note={lockPrompt.note}
+          onClose={() => setLockPrompt(null)}
+          onUnlock={handleUnlockAndProceed}
+        />
       )}
 
       {toast && (
