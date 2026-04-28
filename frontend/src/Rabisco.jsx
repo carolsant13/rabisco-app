@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import logoImg from "./assets/logo.jpeg";
+import { supabase } from "./supabase";
 
 // ── Paleta e estilos globais ──────────────────────────────────────────────────
 const GLOBAL_STYLE = `
@@ -130,6 +131,7 @@ const GLOBAL_STYLE = `
   }
   .btn-primary:hover { background: var(--blue-btn-hover); }
   .btn-primary:active { transform: scale(.98); }
+  .btn-primary:disabled { opacity: .65; cursor: not-allowed; }
 
   .help-btn {
     position:fixed; bottom:20px; right:20px;
@@ -344,10 +346,10 @@ const GLOBAL_STYLE = `
   .cal-day:hover { background:#f0f2f8; }
   .cal-day.today { background:var(--blue-accent); color:#fff; font-weight:700; }
   .cal-day.has-reminder { position:relative; }
-  .cal-day.has-reminder::after { 
-  content:''; position:absolute; bottom:2px; left:50%; 
-  transform:translateX(-50%); width:4px; height:4px; 
-  border-radius:50%; background: var(--dot-color, var(--blue-accent)); 
+  .cal-day.has-reminder::after {
+  content:''; position:absolute; bottom:2px; left:50%;
+  transform:translateX(-50%); width:4px; height:4px;
+  border-radius:50%; background: var(--dot-color, var(--blue-accent));
 }
   .cal-day.today.has-reminder::after { background:#fff; }
   .cal-day.empty { pointer-events:none; }
@@ -562,28 +564,6 @@ const GLOBAL_STYLE = `
   }
 `;
 
-const INITIAL_NOTES = [
-  {
-    id: 1, title: "Lista de Compras", type: "checklist", color: "yellow",
-    items: [
-      { text: "Leite", done: false },
-      { text: "Pão", done: true },
-      { text: "Ovos", done: false },
-    ],
-    reminder: null,
-  },
-  {
-    id: 2, title: "Ideias do Projeto", type: "text", color: "blue",
-    content: "Desenvolver uma aplicação de notas intuitiva e fácil de usar. Incluir diferentes tipos de notas para diferentes necessidades.",
-    reminder: null,
-  },
-  {
-    id: 3, title: "Tarefas da Semana", type: "list", color: "green",
-    items: ["Reunião com equipe", "Revisar código", "Estudar React", "Fazer exercícios"],
-    reminder: null,
-  },
-];
-
 const COLOR_OPTIONS = [
   { key: "yellow", bg: "#fef9c3", border: "#fde047" },
   { key: "blue",   bg: "#dbeafe", border: "#93c5fd" },
@@ -724,13 +704,20 @@ function Logo() {
   );
 }
 
-function LoginPage({ onLogin, onGoRegister }) {
+function LoginPage({ onGoRegister }) {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [showSenha, setShowSenha] = useState(false);
+  const [erro, setErro] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  function handleSubmit() {
-    if (email && senha) onLogin({ email });
+  async function handleSubmit() {
+    if (!email || !senha) return;
+    setLoading(true);
+    setErro("");
+    const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
+    if (error) setErro("Email ou senha incorretos.");
+    setLoading(false);
   }
 
   return (
@@ -743,7 +730,13 @@ function LoginPage({ onLogin, onGoRegister }) {
         <div className="field-group">
           <div className="field">
             <label>Email</label>
-            <input placeholder="seu@email.com" type="email" value={email} onChange={e=>setEmail(e.target.value)} />
+            <input
+              placeholder="seu@email.com"
+              type="email"
+              value={email}
+              onChange={e=>setEmail(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && handleSubmit()}
+            />
           </div>
           <div className="field">
             <label>Senha</label>
@@ -753,34 +746,51 @@ function LoginPage({ onLogin, onGoRegister }) {
                 type={showSenha ? "text" : "password"}
                 value={senha}
                 onChange={e=>setSenha(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && handleSubmit()}
                 style={{paddingRight:"42px", width:"100%"}}
               />
               <button
                 onClick={() => setShowSenha(v=>!v)}
                 style={{position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", fontSize:18, color:"var(--text-sub)", padding:0, lineHeight:1}}
-                title={showSenha ? "Ver senha" : "Ocultar senha"}
+                title={showSenha ? "Ocultar senha" : "Ver senha"}
               >
                 {showSenha ? "🐵" : "🙈"}
               </button>
             </div>
           </div>
+          {erro && <div style={{color:"#ef4444", fontSize:13, fontWeight:700, textAlign:"center"}}>{erro}</div>}
           <span className="auth-link" onClick={onGoRegister}>Criar conta</span>
-          <button className="btn-primary" onClick={handleSubmit}>Entrar</button>
+          <button className="btn-primary" onClick={handleSubmit} disabled={loading}>
+            {loading ? "Entrando..." : "Entrar"}
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
-function RegisterPage({ onRegister, onGoLogin }) {
+function RegisterPage({ onGoLogin }) {
   const [form, setForm] = useState({ nome:"", sobrenome:"", email:"", senha:"", confirmar:"" });
   const [success, setSuccess] = useState(false);
   const [showSenha, setShowSenha] = useState(false);
   const [showConfirmar, setShowConfirmar] = useState(false);
+  const [erro, setErro] = useState("");
+  const [loading, setLoading] = useState(false);
   const set = (k) => (e) => setForm(f=>({...f,[k]:e.target.value}));
 
-  function handleSubmit() {
-    if (form.nome && form.email && form.senha) setSuccess(true);
+  async function handleSubmit() {
+    if (!form.nome || !form.email || !form.senha) return;
+    if (form.senha !== form.confirmar) { setErro("As senhas não coincidem."); return; }
+    setLoading(true);
+    setErro("");
+    const { error } = await supabase.auth.signUp({
+      email: form.email,
+      password: form.senha,
+      options: { data: { nome: form.nome, sobrenome: form.sobrenome } },
+    });
+    if (error) setErro("Erro ao criar conta. Tente novamente.");
+    else setSuccess(true);
+    setLoading(false);
   }
 
   if (success) return (
@@ -844,8 +854,11 @@ function RegisterPage({ onRegister, onGoLogin }) {
               </button>
             </div>
           </div>
+          {erro && <div style={{color:"#ef4444", fontSize:13, fontWeight:700, textAlign:"center"}}>{erro}</div>}
           <span className="auth-link" onClick={onGoLogin}>Já tem uma conta? Entrar</span>
-          <button className="btn-primary" onClick={handleSubmit}>Criar Conta</button>
+          <button className="btn-primary" onClick={handleSubmit} disabled={loading}>
+            {loading ? "Criando conta..." : "Criar Conta"}
+          </button>
         </div>
       </div>
     </div>
@@ -988,7 +1001,6 @@ function Calendar({ notes }) {
 function NoteModal({ mode, initialNote, onClose, onSave, folders, initialFolderId }) {
   const isEdit = mode === "edit";
 
-  // Estado inicial baseado na nota (editar) ou vazio (criar)
   const [title, setTitle] = useState(initialNote?.title ?? "");
   const [type, setType] = useState(initialNote?.type ?? "text");
   const [color, setColor] = useState(initialNote?.color ?? "yellow");
@@ -1001,7 +1013,6 @@ function NoteModal({ mode, initialNote, onClose, onSave, folders, initialFolderI
   const [showPassword, setShowPassword] = useState(false);
   const [folderId, setFolderId] = useState(initialNote?.folderId ?? initialFolderId ?? "");
 
-  // Itens para checklist/list – normalizado como array de strings
   const toStrings = (note) => {
     if (!note) return [""];
     if (note.type === "checklist") return note.items.map(it => it.text);
@@ -1010,7 +1021,6 @@ function NoteModal({ mode, initialNote, onClose, onSave, folders, initialFolderI
   };
   const [items, setItems] = useState(toStrings(initialNote));
 
-  // Quando muda o tipo, reseta itens
   function handleTypeChange(newType) {
     setType(newType);
     if (newType !== "text" && items.length === 0) setItems([""]);
@@ -1019,12 +1029,11 @@ function NoteModal({ mode, initialNote, onClose, onSave, folders, initialFolderI
   function handleSave() {
     if (!title.trim()) return;
     if (hasPassword && password && password !== confirmPassword) return;
-    // Resolve a senha final: nova senha, senha existente mantida, ou sem senha
     const resolvedPassword = hasPassword
       ? (password.trim() ? password : (initialNote?.password ?? null))
       : null;
     const base = {
-      id: initialNote?.id ?? Date.now(),
+      ...(isEdit ? { id: initialNote.id } : {}),
       title,
       type,
       color,
@@ -1037,7 +1046,6 @@ function NoteModal({ mode, initialNote, onClose, onSave, folders, initialFolderI
     } else if (type === "checklist") {
       const filtered = items.filter(t => t.trim());
       if (isEdit) {
-        // Preserva o estado "done" para itens existentes pelo texto
         const oldMap = {};
         (initialNote?.items || []).forEach(it => { oldMap[it.text] = it.done; });
         onSave({ ...base, items: filtered.map(t => ({ text: t, done: oldMap[t] ?? false })) });
@@ -1229,78 +1237,120 @@ function PasswordModal({ note, onClose, onUnlock }) {
 }
 
 function Dashboard({ user, onLogout }) {
-  const [notes, setNotes] = useState(INITIAL_NOTES);
+  const [notes, setNotes] = useState([]);
+  const [folders, setFolders] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [editingNote, setEditingNote] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState(null);
   const [unlockedNotes, setUnlockedNotes] = useState(new Set());
-  const [lockPrompt, setLockPrompt] = useState(null); // { note, action: 'edit' | 'view' }
-  const [folders, setFolders] = useState([]);
-  const [activeFolderId, setActiveFolderId] = useState(null); // null = Todos
+  const [lockPrompt, setLockPrompt] = useState(null);
+  const [activeFolderId, setActiveFolderId] = useState(null);
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [editingFolderId, setEditingFolderId] = useState(null);
   const [editingFolderName, setEditingFolderName] = useState("");
 
+  useEffect(() => { loadData(); }, []);
+
+  async function loadData() {
+    setLoading(true);
+    const [{ data: notesData }, { data: foldersData }] = await Promise.all([
+      supabase.from("notes").select("*").order("created_at", { ascending: false }),
+      supabase.from("folders").select("*").order("created_at"),
+    ]);
+    setNotes((notesData || []).map(n => ({ ...n, folderId: n.folder_id })));
+    setFolders(foldersData || []);
+    setLoading(false);
+  }
+
   function showToast(msg) {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
   }
 
-function handleDelete(id) { setDeletingId(id); }
-function confirmDelete() { 
-  setNotes(n => n.filter(x => x.id !== deletingId)); 
-  setDeletingId(null); 
-  showToast("Rabisco Excluido.")
+  function handleDelete(id) { setDeletingId(id); }
+
+  async function confirmDelete() {
+    await supabase.from("notes").delete().eq("id", deletingId);
+    setNotes(n => n.filter(x => x.id !== deletingId));
+    setDeletingId(null);
+    showToast("Rabisco excluído.");
   }
 
-  function handleToggle(id, idx) {
-    setNotes(n => n.map(note => {
-      if (note.id !== id || note.type !== "checklist") return note;
-      const items = note.items.map((item, i) => i === idx ? {...item, done: !item.done} : item);
-      return {...note, items};
-    }));
+  async function handleToggle(id, idx) {
+    const note = notes.find(n => n.id === id);
+    if (!note || note.type !== "checklist") return;
+    const updatedItems = note.items.map((item, i) => i === idx ? {...item, done: !item.done} : item);
+    await supabase.from("notes").update({ items: updatedItems }).eq("id", id);
+    setNotes(n => n.map(note => note.id !== id ? note : { ...note, items: updatedItems }));
   }
-  function handleCreateFolder() {
+
+  async function handleCreateFolder() {
     if (!newFolderName.trim()) { setCreatingFolder(false); return; }
-    const folder = { id: Date.now(), name: newFolderName.trim(), icon: "📁" };
-    setFolders(f => [...f, folder]);
+    const { data, error } = await supabase.from("folders").insert({
+      name: newFolderName.trim(), icon: "📁", user_id: user.id,
+    }).select().single();
+    if (!error && data) {
+      setFolders(f => [...f, data]);
+      showToast("Pasta criada!");
+    }
     setNewFolderName("");
     setCreatingFolder(false);
-    showToast("Pasta criada!");
   }
-  function handleDeleteFolder(id) {
+
+  async function handleDeleteFolder(id) {
+    await supabase.from("folders").delete().eq("id", id);
     setFolders(f => f.filter(x => x.id !== id));
-    setNotes(n => n.map(note => note.folderId === id ? { ...note, folderId: null } : note));
+    setNotes(n => n.map(note => note.folderId === id ? { ...note, folderId: null, folder_id: null } : note));
     if (activeFolderId === id) setActiveFolderId(null);
     showToast("Pasta excluída.");
   }
+
   function handleStartRenameFolder(folder) {
     setEditingFolderId(folder.id);
     setEditingFolderName(folder.name);
   }
-  function handleSaveRenameFolder(id) {
+
+  async function handleSaveRenameFolder(id) {
     if (editingFolderName.trim()) {
+      await supabase.from("folders").update({ name: editingFolderName.trim() }).eq("id", id);
       setFolders(f => f.map(x => x.id === id ? { ...x, name: editingFolderName.trim() } : x));
     }
     setEditingFolderId(null);
     setEditingFolderName("");
   }
 
-  function handleCreate(note) {
-    setNotes(n => [...n, note]);
-    showToast("Rabisco criado  com sucesso!");
+  async function handleCreate(note) {
+    const { folderId, ...rest } = note;
+    const { data, error } = await supabase.from("notes").insert({
+      title: rest.title,
+      type: rest.type,
+      color: rest.color,
+      content: rest.content ?? null,
+      items: rest.items ?? null,
+      reminder: rest.reminder ?? null,
+      password: rest.password ?? null,
+      folder_id: folderId || null,
+      user_id: user.id,
+    }).select().single();
+    if (!error && data) {
+      setNotes(n => [{ ...data, folderId: data.folder_id }, ...n]);
+      showToast("Rabisco criado com sucesso!");
+    }
   }
+
   function handleEdit(note) { setEditingNote(note); }
-  function handleRequestUnlock(note, action) {
-    setLockPrompt({ note, action });
-  }
+
+  function handleRequestUnlock(note, action) { setLockPrompt({ note, action }); }
+
   function handleUnlock(noteId) {
     setUnlockedNotes(prev => new Set([...prev, noteId]));
   }
+
   function handleUnlockAndProceed(noteId) {
     handleUnlock(noteId);
     if (lockPrompt?.action === "edit") {
@@ -1309,8 +1359,19 @@ function confirmDelete() {
     }
     setLockPrompt(null);
   }
-  function handleSaveEdit(updated) {
-    setNotes(n => n.map(note => note.id === updated.id ? updated : note));
+
+  async function handleSaveEdit(updated) {
+    const { data } = await supabase.from("notes").update({
+      title: updated.title,
+      type: updated.type,
+      color: updated.color,
+      content: updated.content ?? null,
+      items: updated.items ?? null,
+      reminder: updated.reminder ?? null,
+      password: updated.password ?? null,
+      folder_id: updated.folderId ?? null,
+    }).eq("id", updated.id).select().single();
+    if (data) setNotes(n => n.map(note => note.id === updated.id ? { ...data, folderId: data.folder_id } : note));
     showToast("Rabisco atualizado!");
   }
 
@@ -1318,6 +1379,15 @@ function confirmDelete() {
     .filter(n => n.type !== "calendar")
     .filter(n => activeFolderId === null || n.folderId === activeFolderId)
     .filter(n => n.title.toLowerCase().includes(search.toLowerCase()));
+
+  if (loading) return (
+    <div className="app-bg">
+      <style>{GLOBAL_STYLE}</style>
+      <div style={{color:"#fff", fontFamily:"'Nunito',sans-serif", fontSize:18, fontWeight:700}}>
+        Carregando seus rabiscos...
+      </div>
+    </div>
+  );
 
   return (
     <div className="dash-wrap">
@@ -1336,10 +1406,8 @@ function confirmDelete() {
       </div>
 
       <div className="dash-body">
-        {/* Backdrop fecha o drawer ao clicar fora */}
         <div className={`sidebar-backdrop ${sidebarOpen ? "open" : ""}`} onClick={() => setSidebarOpen(false)} />
 
-        {/* ── Sidebar de Pastas ── */}
         <aside className={`sidebar ${sidebarOpen ? "open" : ""}`}>
           <div className="sidebar-label">Rabiscos</div>
           <div
@@ -1481,8 +1549,8 @@ function confirmDelete() {
           </div>
           <Calendar notes={notes} />
         </div>
-        </div>{/* fim dash-content */}
-      </div>{/* fim dash-body */}
+        </div>
+      </div>
 
       {showCreate && (
         <NoteModal
@@ -1540,24 +1608,44 @@ function confirmDelete() {
       )}
 
       {toast && (
-  <div className="toast">{toast}</div>
-)}
+        <div className="toast">{toast}</div>
+      )}
     </div>
-
   );
-
 }
 
 // ── App root ──────────────────────────────────────────────────────────────────
 export default function App() {
-  const [screen, setScreen] = useState("login");
+  const [screen, setScreen] = useState("loading");
   const [user, setUser] = useState(null);
 
-  function handleLogin(u) { setUser(u); setScreen("dashboard"); }
-  function handleRegister(u) { setUser(u); setScreen("dashboard"); }
-  function handleLogout() { setUser(null); setScreen("login"); }
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setScreen(session ? "dashboard" : "login");
+    });
 
-  if (screen === "login") return <LoginPage onLogin={handleLogin} onGoRegister={() => setScreen("register")} />;
-  if (screen === "register") return <RegisterPage onRegister={handleRegister} onGoLogin={() => setScreen("login")} />;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setScreen(session ? "dashboard" : "login");
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+  }
+
+  if (screen === "loading") return (
+    <div className="app-bg">
+      <style>{GLOBAL_STYLE}</style>
+      <div style={{color:"#fff", fontFamily:"'Nunito',sans-serif", fontSize:18, fontWeight:700}}>
+        Carregando...
+      </div>
+    </div>
+  );
+  if (screen === "login") return <LoginPage onGoRegister={() => setScreen("register")} />;
+  if (screen === "register") return <RegisterPage onGoLogin={() => setScreen("login")} />;
   return <Dashboard user={user} onLogout={handleLogout} />;
 }
