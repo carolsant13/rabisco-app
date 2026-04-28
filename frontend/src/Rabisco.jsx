@@ -781,15 +781,20 @@ function RegisterPage({ onGoLogin }) {
   async function handleSubmit() {
     if (!form.nome || !form.email || !form.senha) return;
     if (form.senha !== form.confirmar) { setErro("As senhas não coincidem."); return; }
+    if (form.senha.length < 6) { setErro("A senha deve ter pelo menos 6 caracteres."); return; }
     setLoading(true);
     setErro("");
-    const { error } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.senha,
-      options: { data: { nome: form.nome, sobrenome: form.sobrenome } },
-    });
-    if (error) setErro("Erro ao criar conta. Tente novamente.");
-    else setSuccess(true);
+    try {
+      const { error } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.senha,
+        options: { data: { nome: form.nome, sobrenome: form.sobrenome } },
+      });
+      if (error) setErro(error.message);
+      else setSuccess(true);
+    } catch (e) {
+      setErro("Erro de conexão. Verifique sua internet.");
+    }
     setLoading(false);
   }
 
